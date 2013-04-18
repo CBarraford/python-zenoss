@@ -66,7 +66,11 @@ class ZenossAPI():
         self.req_count += 1
         log.info('Making request to router %s with method %s', router, method)
         log.debug('Request data: %s', req_data)
-        return json.loads(self.urlOpener.open(req, req_data).read())['result']
+        s = json.loads(self.urlOpener.open(req, req_data).read())
+        if "result" in s:
+            return s['result']
+        else:
+            return {}
 
     def get_devices(self, deviceClass='/zport/dmd/Devices'):
         """Get a list of all devices.
@@ -189,6 +193,17 @@ class ZenossAPI():
         device = self.find_device(device_name)
         data = dict(uids=[device['uid']], hashcheck=device['hash'], ip=ip)
         return self._router_request('DeviceRouter', 'resetIp', [data])
+
+    def get_event(self, evid):
+        """Find an event with evid.
+
+        """
+        log.info('Getting events for: %s' % data)
+        r = self._router_request('EventsRouter', 'detail', [{'evid': evid, 'history': 'True'}])
+        if "event" in r:
+            return r['event'][0]
+        else:
+            return {}
 
     def get_events(self, device=None, limit=100, component=None, eventClass=None):
         """Find current events.
